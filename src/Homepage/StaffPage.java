@@ -24,8 +24,8 @@ public class StaffPage extends JFrame {
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.insets = new Insets(10, 10, 10, 10);
 
-        JLabel infoLabel = new JLabel("<html><center>Congratulations " + currentUser.getUsername().toUpperCase() +
-                "<br>You have successfully signed in!<br>Contact your administrator for further assistance.</center></html>");
+        JLabel infoLabel = new JLabel("<html><h3><center>Congratulations " + currentUser.getUsername().toUpperCase() +
+                "<br>You have successfully signed in!<br>Contact your administrator for further assistance.</center></h3></html>");
         infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 

@@ -34,6 +34,7 @@ public class HomePage extends JFrame {
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.insets = new Insets(5, 5, 5, 5);
 
+
         ImageIcon imageIcon = new ImageIcon("images/home.png");
         JLabel imageLabel = new JLabel(imageIcon);
         constraints.gridx = 0;
@@ -54,12 +55,23 @@ public class HomePage extends JFrame {
         panel.add(roleLabel, constraints);
 
 
-        JPanel itemsPanel = new JPanel(new GridBagLayout());
+        JPanel itemsPanel = new JPanel();
+        itemsPanel.setLayout(new BoxLayout(itemsPanel, BoxLayout.Y_AXIS));
         loadItemsFromDatabase(itemsPanel, constraints);
         JScrollPane scrollPane = new JScrollPane(itemsPanel);
-        constraints.gridy = 4;
-        constraints.gridwidth = 2;
-        panel.add(scrollPane, constraints);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+        // Set the constraints for scrollPane
+        GridBagConstraints scrollPaneConstraints = new GridBagConstraints();
+        scrollPaneConstraints.gridx = 0;
+        scrollPaneConstraints.gridy = 4;
+        scrollPaneConstraints.gridwidth = 2;
+        scrollPaneConstraints.fill = GridBagConstraints.BOTH; // Allow vertical and horizontal expansion
+        scrollPaneConstraints.weightx = 1.0;
+        scrollPaneConstraints.weighty = 1.0;
+
+        // Add the JScrollPane to the main panel
+        panel.add(scrollPane, scrollPaneConstraints);
 
         JButton viewTaskButton = new JButton("Your Tasks");
         viewTaskButton.addActionListener(new ActionListener() {
@@ -131,79 +143,104 @@ public class HomePage extends JFrame {
         }
     }
 
-
-
-
     private void loadItemsFromDatabase(JPanel itemsPanel, GridBagConstraints constraints) {
-            try (Connection connection = DriverManager.getConnection(
-                    AppDefaults.DB_URL, AppDefaults.DB_USERNAME, AppDefaults.DB_PASSWORD)) {
+        try (Connection connection = DriverManager.getConnection(
+                AppDefaults.DB_URL, AppDefaults.DB_USERNAME, AppDefaults.DB_PASSWORD)) {
 
-                String userRole = getUserRole(currentUser.getUsername());
+            String userRole = getUserRole(currentUser.getUsername());
 
-                String sql = "SELECT task_id, description FROM tasks WHERE user_role = ?";
-                try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                    preparedStatement.setString(1, userRole);
+            String sql = "SELECT task_id, description FROM tasks WHERE user_role = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, userRole);
 
-                    try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                        int row = 0;
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    int row = 0;
 
-                        while (resultSet.next()) {
-                            int taskId = resultSet.getInt("task_id");
-                            String taskDescription = resultSet.getString("description");
+                    // Use GridLayout for grid-like organization
+                    itemsPanel.setLayout(new GridBagLayout());
 
-                            JPanel taskEntryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-                            taskEntryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    while (resultSet.next()) {
+                        int taskId = resultSet.getInt("task_id");
+                        String taskDescription = resultSet.getString("description");
 
-                            JLabel taskLabel = new JLabel("" + taskId + " -> " + taskDescription);
-                            taskLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
-                            taskEntryPanel.add(taskLabel);
+                        JPanel taskEntryPanel = new JPanel(new BorderLayout(10, 5)); // Adjust spacing
+                        taskEntryPanel.setPreferredSize(new Dimension(500, 80)); // Adjust preferred size
+                        taskEntryPanel.setBackground(Color.WHITE); // Add a background color for better visibility
 
-                            JButton chooseTaskButton = new JButton("Choose Task");
-                            chooseTaskButton.setFocusPainted(false);
+                        JTextArea taskTextArea = new JTextArea(taskDescription);
+                        taskTextArea.setLineWrap(true);
+                        taskTextArea.setWrapStyleWord(true);
+                        taskTextArea.setEditable(false);
+                        taskTextArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
-                            if (isTaskAlreadyChosen(connection, currentUser.getUserId(), taskId)) {
-                                chooseTaskButton.setEnabled(false);
-                                chooseTaskButton.setText("Task Chosen");
-                            } else {
-                                chooseTaskButton.addActionListener(new ActionListener() {
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                        tasksChosen.put(currentUser.getUsername() + "_" + taskId, taskDescription);
+                        JScrollPane textScrollPane = new JScrollPane(taskTextArea);
+                        textScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+                        taskEntryPanel.add(textScrollPane, BorderLayout.CENTER);
 
-                                        addChosenTaskToDatabase(currentUser.getUsername(), taskId, chooseTaskButton);
+                        JButton chooseTaskButton = new JButton("Choose Task");
+                        chooseTaskButton.setFocusPainted(false);
 
-                                        chooseTaskButton.setEnabled(false);
-                                        chooseTaskButton.setText("Task Chosen");
-                                    }
-                                });
-                            }
+                        chooseTaskButton.setBackground(new Color(128, 128, 128));
+                        chooseTaskButton.setForeground(Color.WHITE);
 
-                            taskEntryPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-                            taskEntryPanel.add(chooseTaskButton);
 
-                            constraints.gridx = 0;
-                            constraints.gridy = row + 1;
-                            constraints.anchor = GridBagConstraints.WEST;
-                            itemsPanel.add(taskEntryPanel, constraints);
+                        if (isTaskAlreadyChosen(connection, currentUser.getUserId(), taskId)) {
+                            chooseTaskButton.setEnabled(false);
+                            chooseTaskButton.setText("Task Chosen");
+                        } else {
+                            chooseTaskButton.addActionListener(new ActionListener() {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    tasksChosen.put(currentUser.getUsername() + "_" + taskId, taskDescription);
 
-                            userTask.add("Task ID: " + taskId + ", Description: " + taskDescription);
-                            row++;
+                                    addChosenTaskToDatabase(currentUser.getUsername(), taskId, chooseTaskButton);
+
+                                    chooseTaskButton.setEnabled(false);
+                                    chooseTaskButton.setText("Task Chosen");
+                                }
+                            });
                         }
 
-                        if (row == 0) {
-                            JLabel noTasksLabel = new JLabel("No tasks available.");
-                            constraints.gridx = 0;
-                            constraints.gridy = 0;
-                            constraints.gridwidth = 2;
-                            itemsPanel.add(noTasksLabel, constraints);
-                        }
+                        taskEntryPanel.add(chooseTaskButton, BorderLayout.SOUTH);
+
+                        taskEntryPanel.setBackground(new Color(240, 240, 240));
+
+                        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+                        gridBagConstraints.gridx = 0;
+                        gridBagConstraints.gridy = row;
+                        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+                        gridBagConstraints.weightx = 1.0;
+                        gridBagConstraints.insets = new Insets(10, 10, 10, 10);
+
+                        itemsPanel.add(taskEntryPanel, gridBagConstraints);
+
+                        userTask.add("Task ID: " + taskId + ", Description: " + taskDescription);
+                        row++;
+                    }
+
+                    if (row == 0) {
+                        JLabel noTasksLabel = new JLabel("No tasks available.");
+                        itemsPanel.add(noTasksLabel);
                     }
                 }
-            } catch (SQLException ex) {
-                showErrorDialog("Error loading items from database", ex.getMessage());
             }
+
+            // Wrap itemsPanel with a JScrollPane
+            JScrollPane scrollPane = new JScrollPane(itemsPanel);
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+            scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+            // Set the layout of the container (assuming it is a JPanel)
+            setLayout(new BorderLayout());
+            add(scrollPane, BorderLayout.CENTER);
+
+        } catch (SQLException ex) {
+            showErrorDialog("Error loading items from database", ex.getMessage());
         }
-        public static boolean isTaskAlreadyChosen(Connection connection, int userId, int taskId) throws SQLException {
+    }
+
+
+    public static boolean isTaskAlreadyChosen(Connection connection, int userId, int taskId) throws SQLException {
             String sql = "SELECT COUNT(*) FROM tasks_chosen WHERE user_id = ? AND task_id = ?";
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setInt(1, userId);

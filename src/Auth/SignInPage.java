@@ -1,6 +1,5 @@
 package Auth;
 
-
 import Admin.AdminPage;
 import Control.User;
 import Database.AppDefaults;
@@ -13,6 +12,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 
 public class SignInPage extends JFrame {
@@ -49,42 +50,35 @@ public class SignInPage extends JFrame {
                 String usernameOrEmail = signInUsernameOrEmailField.getText();
                 String password = new String(signInPasswordField.getPassword());
 
-                try {
-                    Connection connection = DriverManager.getConnection(
-                            AppDefaults.DB_URL, AppDefaults.DB_USERNAME, AppDefaults.DB_PASSWORD);
+                try (Connection connection = DriverManager.getConnection(
+                        AppDefaults.DB_URL, AppDefaults.DB_USERNAME, AppDefaults.DB_PASSWORD)) {
 
-                    PreparedStatement preparedStatement = connection.prepareStatement(
-                            "SELECT * FROM users WHERE username = ? OR email = ?");
-                    preparedStatement.setString(1, usernameOrEmail);
-                    preparedStatement.setString(2, usernameOrEmail);
-                    ResultSet resultSet = preparedStatement.executeQuery();
+                    // Use a prepared statement to prevent SQL injection
+                    String query = "SELECT * FROM users WHERE username = ? OR email = ?";
+                    try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                        preparedStatement.setString(1, usernameOrEmail);
+                        preparedStatement.setString(2, usernameOrEmail);
 
-                    if (resultSet.next()) {
-                        String storedPassword = resultSet.getString("password");
-                        String role = resultSet.getString("role");
+                        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                            if (resultSet.next()) {
+                                String storedPassword = resultSet.getString("password");
+                                String role = resultSet.getString("role");
 
-                        if (password.equals(storedPassword)) {
-                            if ("admin".equalsIgnoreCase(role)) {
+                                // Hash the provided password for comparison
+                                String hashedPassword = hashPassword(password);
 
-                                dispose();
-                                new AdminPage();
-                            } else if ("staff".equalsIgnoreCase(role)){
-                                User user = new User(usernameOrEmail);
-                                dispose();
-                                new StaffPage(user);}
-                            else {
-                                User user = new User(usernameOrEmail);
-                                dispose();
-                                new HomePage(user);
+                                if (hashedPassword.equals(storedPassword)) {
+                                    handleSignInSuccess(role, usernameOrEmail);
+                                } else {
+                                    JOptionPane.showMessageDialog(SignInPage.this, "Incorrect password.");
+                                }
+                            } else {
+                                JOptionPane.showMessageDialog(SignInPage.this, "User not found.");
                             }
-                        } else {
-                            JOptionPane.showMessageDialog(SignInPage.this, "Incorrect password.");
                         }
-                    } else {
-                        JOptionPane.showMessageDialog(SignInPage.this, "User not found.");
                     }
-                    connection.close();
-                } catch (SQLException ex) {
+                } catch (SQLException | NoSuchAlgorithmException ex) {
+                    ex.printStackTrace();
                     JOptionPane.showMessageDialog(SignInPage.this, "Error signing in: " + ex.getMessage());
                 }
             }
@@ -108,14 +102,13 @@ public class SignInPage extends JFrame {
         constraints.gridwidth = 2;
         panel.add(signInButton, constraints);
 
-        //A navigation link to the signup page
+        // A navigation link to the signup page
         JLabel signUpLink = new JLabel("Don't have an account? Sign up here.");
         signUpLink.setForeground(Color.BLUE);
         signUpLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         signUpLink.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-
                 dispose();
                 new SignUpPage();
             }
@@ -129,4 +122,29 @@ public class SignInPage extends JFrame {
         setVisible(true);
     }
 
+    private void handleSignInSuccess(String role, String username) {
+        dispose();
+        if ("admin".equalsIgnoreCase(role)) {
+            new AdminPage();
+        } else if ("staff".equalsIgnoreCase(role)) {
+            User user = new User(username);
+            new StaffPage(user);
+        } else {
+            User user = new User(username);
+            new HomePage(user);
+        }
+    }
+
+    private String hashPassword(String password) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] hashedBytes = md.digest(password.getBytes());
+
+        // Convert byte array to a hexadecimal string
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashedBytes) {
+            sb.append(String.format("%02x", b));
+        }
+
+        return sb.toString();
+    }
 }

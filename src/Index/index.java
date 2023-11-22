@@ -22,7 +22,7 @@ public class index extends JFrame {
         ImageIcon imageIcon = new ImageIcon("images/welcome.png");
         JLabel imageLabel = new JLabel(imageIcon);
 
-        JLabel headingLabel = new JLabel("<html><h1 style='font-size: 36px; font-weight: bold;'>Welcome To UTOPIA</h1></html>");
+        JLabel headingLabel = new JLabel("<html><h1 style='font-weight: bold;'>Welcome To UTOPIA</h1></html>");
 
         JButton signUpButton = new JButton("Sign Up");
         JButton signInButton = new JButton("Sign In");

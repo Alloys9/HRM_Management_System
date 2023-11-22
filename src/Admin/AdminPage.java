@@ -182,10 +182,4 @@ public class AdminPage extends JFrame {
         System.out.println("Logging out...");
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            AdminPage adminPage = new AdminPage();
-            adminPage.setVisible(true);
-        });
-    }
 }

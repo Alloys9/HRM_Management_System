@@ -164,10 +164,13 @@ public class Accounts extends JFrame {
     private JPanel createUploadPanel() {
         JPanel uploadPanel = new JPanel(new GridBagLayout());
         uploadPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        uploadPanel.setBackground(Color.WHITE);
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
 
         taskField = new JTextArea("Enter task description here...", 3, 30);
+        taskField.setLineWrap(true);
         taskField.setForeground(Color.GRAY);
         taskField.setCaretColor(Color.BLACK);
         taskField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
@@ -212,6 +215,7 @@ public class Accounts extends JFrame {
             }
         });
 
+
         uploadTaskButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -239,10 +243,11 @@ public class Accounts extends JFrame {
 
 
 
+        gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.insets = new Insets(10, 10, 10, 5);
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.PAGE_END;
+        gbc.insets = new Insets(10, 0, 10, 0);
         uploadPanel.add(uploadTaskButton, gbc);
 
         return uploadPanel;
@@ -452,13 +457,6 @@ public class Accounts extends JFrame {
                 }
                 return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             }
-        });
-    }
-
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new Accounts();
         });
     }
 }
