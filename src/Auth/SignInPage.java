@@ -5,6 +5,7 @@ import Admin.AdminPage;
 import Control.User;
 import Database.AppDefaults;
 import Homepage.HomePage;
+import Homepage.StaffPage;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,8 +68,11 @@ public class SignInPage extends JFrame {
 
                                 dispose();
                                 new AdminPage();
-                            } else {
-
+                            } else if ("staff".equalsIgnoreCase(role)){
+                                User user = new User(usernameOrEmail);
+                                dispose();
+                                new StaffPage(user);}
+                            else {
                                 User user = new User(usernameOrEmail);
                                 dispose();
                                 new HomePage(user);

@@ -3,6 +3,7 @@ package Auth;
 import Control.User;
 import Database.AppDefaults;
 import Homepage.HomePage;
+import Homepage.StaffPage;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,10 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 
 public class SignUpPage extends JFrame {
 
@@ -80,6 +78,24 @@ public class SignUpPage extends JFrame {
                         preparedStatement.setString(3, password);
                         preparedStatement.executeUpdate();
 
+
+                        String userRole = getUserRole(username);
+
+                        JOptionPane.showMessageDialog(SignUpPage.this, "User signed up: " + username);
+
+                        connection.close();
+                        dispose();
+
+                        if ("user".equals(userRole)) {
+                            User user = new User(username);
+                            dispose();
+                            new HomePage(user);
+                        } else if ("staff".equals(userRole)) {
+                            User user = new User(username);
+                            dispose();
+                            new StaffPage(user);
+                        } else {
+                        }
                         JOptionPane.showMessageDialog(SignUpPage.this, "User signed up: " + username);
 
                         connection.close();
@@ -146,4 +162,27 @@ public class SignUpPage extends JFrame {
 
         setVisible(true);
     }
+
+    private String getUserRole(String username) {
+        String role = null;
+        try (Connection connection = DriverManager.getConnection(
+                AppDefaults.DB_URL, AppDefaults.DB_USERNAME, AppDefaults.DB_PASSWORD)) {
+
+            String sql = "SELECT role FROM users WHERE username = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, username);
+
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        role = resultSet.getString("role");
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return role;
+    }
+
+
 }

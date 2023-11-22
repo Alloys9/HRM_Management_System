@@ -42,7 +42,7 @@ public class HomePage extends JFrame {
         panel.add(imageLabel, constraints);
 
 
-        JLabel userNameLabel = new JLabel("Welcome, " + currentUser.getUsername());
+        JLabel userNameLabel = new JLabel("Welcome, " + currentUser.getUsername().toUpperCase());
         JLabel roleLabel = new JLabel("" + getUserRole(currentUser.getUsername()));
         userNameLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
         roleLabel.setFont(new Font("SansSerif", Font.PLAIN, 16));
@@ -80,10 +80,11 @@ public class HomePage extends JFrame {
                 }
             }
         });
-        JPanel topRightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        GridBagConstraints topRightConstraints = new GridBagConstraints();
-        topRightConstraints.insets = new Insets(5, 5, 5, 10);
-        topRightConstraints.gridx = 1;
+
+        JPanel bottomRightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        GridBagConstraints bottomRightConstraints = new GridBagConstraints();
+        bottomRightConstraints.insets = new Insets(80, 0, 0, 80);
+        bottomRightConstraints.gridx = 1;
 
         ImageIcon logoutIcon = new ImageIcon("images/logout.png");
         JLabel logoutImageLabel = new JLabel(logoutIcon);
@@ -101,11 +102,11 @@ public class HomePage extends JFrame {
 
         logoutButton.setIcon(logoutIcon);
 
-        topRightPanel.add(logoutButton);
+        bottomRightPanel.add(logoutButton);
 
-        constraints.gridy = 0;
-        constraints.gridwidth = 2;
-        panel.add(topRightPanel, topRightConstraints);
+        constraints.gridy = 2;
+        constraints.gridwidth = 0;
+        panel.add(bottomRightPanel, bottomRightConstraints);
 
         viewTaskButton.setFocusable(false);
 
@@ -290,4 +291,5 @@ public class HomePage extends JFrame {
         }
         return role;
     }
+
 }
